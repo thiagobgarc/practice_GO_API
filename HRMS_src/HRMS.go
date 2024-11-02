@@ -1,7 +1,10 @@
 package hrmssrc
 
 import (
+	"context"
+
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Employee struct {
@@ -59,3 +62,22 @@ var mg MongoDB
 
 const nameMongDb = "HRMS"
 const mongoURI = "mongodb://localhost:27017" + nameMongDb
+
+// Connect creates a new client and connects to the mongo database.
+// It returns an error if the connection can't be established.
+func Connect() error {
+	clientOptions := options.Client().ApplyURI(mongoURI)
+	client, err := mongo.Connect(context.TODO(), clientOptions)
+
+	if err != nil {
+		return err
+	}
+
+	db := client.Database(nameMongDb)
+
+	mg = MongoDB{
+		Client: client,
+		Db:     db,
+	}
+	return nil
+}
