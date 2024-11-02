@@ -1,5 +1,9 @@
 package hrmssrc
 
+import (
+	"go.mongodb.org/mongo-driver/mongo"
+)
+
 type Employee struct {
 	FirstName string  `json:"first_name"`
 	LastName  string  `json:"last_name"`
@@ -45,3 +49,13 @@ var employees = []Employee{
 		Active:    true,
 	},
 }
+
+type MongoDB struct {
+	Client *mongo.Client
+	Db     *mongo.Database
+}
+
+var mg MongoDB
+
+const nameMongDb = "HRMS"
+const mongoURI = "mongodb://localhost:27017" + nameMongDb
