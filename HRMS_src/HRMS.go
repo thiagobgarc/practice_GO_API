@@ -2,7 +2,11 @@ package hrmssrc
 
 import (
 	"context"
+	"fmt"
+	"log"
+	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -80,4 +84,71 @@ func Connect() error {
 		Db:     db,
 	}
 	return nil
+}
+
+func GetEmployees(c *gin.Context) []Employee {
+	c.IndentedJSON(http.StatusOK, employees)
+	return employees
+}
+
+func GetEmployee(email string, c *gin.Context) (Employee, error) {
+	for _, e := range employees {
+		if e.Email == email {
+			return e, nil
+		}
+	}
+
+	return Employee{}, fmt.Errorf("employee not found")
+}
+
+func AddEmployee(employee Employee, c *gin.Context) error {
+	employees = append(employees, employee)
+	return nil
+}
+
+func UpdateEmployee(email string, employee Employee, c *gin.Context) error {
+	for i, e := range employees {
+		if e.Email == email {
+			employees[i] = employee
+			return nil
+		}
+	}
+
+	return fmt.Errorf("employee not found")
+}
+
+func DeleteEmployee(c *gin.Context, email string) error {
+	for i, e := range employees {
+		if e.Email == email {
+			employees = append(employees[:i], employees[i+1:]...)
+			return nil
+		}
+	}
+
+	return fmt.Errorf("employee not found")
+}
+
+func Disconnect() error {
+	return mg.Client.Disconnect(context.TODO())
+}
+
+func hrmssrc() {
+	if err := Connect(); err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	router := gin.Default()
+
+	router.GET("/employees", GetEmployees)
+	router.GET("/employees/:email", GetEmployee)
+	router.POST("/employees", AddEmployee)
+	router.PATCH("/employees/:email", UpdateEmployee)
+	router.DELETE("/employees/:email", DeleteEmployee)
+
+	if err := router.Run(":8080"); err != nil {
+		log.Fatal(err)
+	}
+	defer Disconnect()
+
 }
